@@ -21,7 +21,7 @@ export default function AddTodo() {
     const [formData, setFormData] = useState({
         title: "",
         details: "",
-        status: "0",
+        status: "",
     });
 
     const handleInputChange = (field, value) => {
@@ -71,7 +71,7 @@ export default function AddTodo() {
         setFormData({
             title: "",
             details: "",
-            status: "0",
+            status: "",
         });
         setRefreshing(false);
     };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, TouchableOpacity } from "react-native";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, RefreshControl, TouchableOpacity, Alert } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 
 
@@ -9,11 +9,11 @@ const getStatusText = (status) => {
     } else if (status === "1") {
         return "⌚ Pending";
     } else {
-        return "❌ Incomplete";
+        return "❌ Not Started";
     }
 };
 
-const TodoList = () => {
+const TodoList = ({ filter }) => {
     const [todos, setTodos] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -21,21 +21,24 @@ const TodoList = () => {
     const [hasMore, setHasMore] = useState(true);
     const navigation = useNavigation();
 
-
     const handleNavigate = (todo) => {
         navigation.navigate('TodoDetailScreen', { todo });
     };
 
     const fetchTodos = async (pageNum = 1) => {
-        const url = `https://laravel-crud-api-production-223e.up.railway.app/api/todos?page=${pageNum}`;
+        let url = `https://laravel-crud-api-production-223e.up.railway.app/api/todos?page=${pageNum}`;
+        if (filter !== "all") {
+            url = `https://laravel-crud-api-production-223e.up.railway.app/api/todos/status/${filter}`;
+        }
+
         try {
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const result = await response.json();
-            if (result.todos.data.length > 0) {
-                setTodos((prevTodos) => [...prevTodos, ...result.todos.data]);
+            if (result.data?.data?.length > 0) {
+                setTodos(pageNum === 1 ? result.data.data : [...todos, ...result.data.data]);
                 setPage(pageNum);
             } else {
                 setHasMore(false);
@@ -48,12 +51,12 @@ const TodoList = () => {
         }
     };
 
-    // Initial fetch
     useEffect(() => {
-        fetchTodos();
-    }, []);
+        setTodos([]); // Clear todos when filter changes
+        setHasMore(true); // Reset pagination
+        fetchTodos(1);
+    }, [filter]);
 
-    // Pull-to-refresh handler
     const handleRefresh = () => {
         setRefreshing(true);
         setHasMore(true);
@@ -61,7 +64,6 @@ const TodoList = () => {
         fetchTodos(1);
     };
 
-    // Load more handler when reaching the bottom of the list
     const handleLoadMore = () => {
         if (!loading && hasMore) {
             setLoading(true);
@@ -69,7 +71,6 @@ const TodoList = () => {
         }
     };
 
-    // Render each todo item
     const renderItem = ({ item }) => (
         <TouchableOpacity onPress={() => handleNavigate(item)}>
             <View style={styles.todoItem}>
@@ -92,12 +93,9 @@ const TodoList = () => {
         <View style={styles.container}>
             <FlatList
                 data={todos}
-                refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-                }
-
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
                 showsVerticalScrollIndicator={false}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item, index) => `${item.id}-${index}`}
                 renderItem={renderItem}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.5}
@@ -113,6 +111,7 @@ const TodoList = () => {
         </View>
     );
 };
+
 
 const styles = StyleSheet.create({
     container: {

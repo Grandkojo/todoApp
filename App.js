@@ -26,8 +26,8 @@ const Stack = createNativeStackNavigator();
 // Stack Navigator for Home and Todo Detail
 const HomeStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="Home" component={HomeScreen} />
-    <Stack.Screen name="TodoDetail" component={TodoDetailScreen} />
+    <Stack.Screen name="HomeScreen" component={HomeScreen} />
+    <Stack.Screen name="TodoDetailScreen" component={TodoDetailScreen} />
   </Stack.Navigator>
 );
 
